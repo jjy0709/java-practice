@@ -1,7 +1,12 @@
 package next.reflection;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 
+import next.optional.User;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +22,19 @@ public class ReflectionTest {
     public void showClass() {
         SoftAssertions s = new SoftAssertions();
         Class<Question> clazz = Question.class;
-        logger.debug("Classs Name {}", clazz.getName());
+
+        Field[] fields = clazz.getDeclaredFields();
+        Constructor[] constructors = clazz.getDeclaredConstructors();
+        Method[] methods = clazz.getDeclaredMethods();
+
+        logger.debug("Class Name {}", clazz.getName());
+        logger.debug("Field Name {}", Arrays.toString(fields));
+        logger.debug("Constructor Name {}", Arrays.toString(constructors));
+        logger.debug("Method Name {}", Arrays.toString(methods));
+
+        s.assertThat(fields.length).isEqualTo(6);
+        s.assertThat(constructors.length).isEqualTo(2);
+        s.assertThat(methods.length).isEqualTo(11);
     }
 
     @Test
@@ -31,5 +48,47 @@ public class ReflectionTest {
                 logger.debug("param type : {}", paramType);
             }
         }
+    }
+
+    @Test
+    public void privateFieldAccess() throws NoSuchFieldException, IllegalAccessException {
+        SoftAssertions s = new SoftAssertions();
+        Class<Student> clazz = Student.class;
+        logger.debug(clazz.getName());
+
+        Field[] fields = clazz.getDeclaredFields();
+        logger.debug(Arrays.toString(fields));
+
+        Field name = clazz.getDeclaredField("name");
+        Field age = clazz.getDeclaredField("age");
+
+        name.setAccessible(true);
+        age.setAccessible(true);
+
+        Student student = new Student();
+
+        name.set(student, "명수");
+        age.set(student, 12);
+
+        s.assertThat(student.getName()).isEqualTo("명수");
+        s.assertThat(student.getAge()).isEqualTo(12);
+    }
+
+    @Test
+    void createInstanceWithParameters() throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        SoftAssertions s = new SoftAssertions();
+        Class<User> clazz = User.class;
+
+        Constructor[] constructors = clazz.getDeclaredConstructors();
+        logger.debug(Arrays.toString(constructors));
+
+        Object[] parameters = new Object[2];
+        parameters[0] = "명수";
+        parameters[1] = 12;
+
+        User user = (User) constructors[0].newInstance(parameters);
+
+        s.assertThat(user.getName()).isEqualTo("명수");
+        s.assertThat(user.getAge()).isEqualTo(12);
     }
 }
